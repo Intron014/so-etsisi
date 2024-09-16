@@ -1,19 +1,12 @@
-/imagen/**
-!/imagen/minix3hd.7z
 log_e9.bin
 
 /imagen/**
 !/imagen/minix3hd.7z
 !/imagen/minix3hd.plot.7z
-
-/trabajo/**
-!/trabajo/
-!/trabajo/bin/
-!/trabajo/bin/*
+!/imagen/minix3hd.plot.bt0354.7z
 
 /utilidades/qemu/
 
-# Tras la subida inicial, no es necesario registrar los cambios aquí.
 id.txt
 
 /src/MINIX3/
