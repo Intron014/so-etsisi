@@ -1,5 +1,8 @@
 @echo off
 
+if "%1"=="--minix" (
+    goto step4
+)
 
 :step1
 @rem 1. Leemos el número de matrícula
@@ -43,9 +46,49 @@ if exist .\imagen\%IMAGEUNZIP% goto step3_imagenExiste
 
 :step3_imagenExiste
 echo 3.2 - Imagen OK
-goto end
+goto step4
 :step3_imagenUnzippeada
 echo 3.3 - Imagen unzippeada con éxito
+goto step4
+
+:step4
+@rem 4. Preparamos e iniciamos
+tasklist /FI "IMAGENAME eq httptar.exe" 2>NUL | find /I "httptar.exe" >NUL
+if %ERRORLEVEL% == 0 goto httptar_ok
+    echo ERROR No se encuentra el servidor HTTPServer
+    echo Abre otra terminal y open it...
+    pause
+
+:htar_ok
+echo Estableciendo directorio temporal local
+set RUTATRABAJO=.\
+subst M: %RUTATRABAJO%
+echo M: %RUTATRABAJO%
+set MINIX_PATH=M:\imagen\%IMAGEUNZIP%
+echo Trabajaremos con %MINIX_PATH%
+
+set MINIXOUT=.\out
+if exist %MINIXOUT% goto out_dir_created
+    mkdir %MINIXOUT%
+
+:out_dir_created
+
+echo Minix arrancando
+
+M:utilidades\qemu\qemu-system-x86_64w.exe ^
+-cpu "pentium3" ^
+-m 512 ^
+-name %ID% ^
+-rtc base=localtime ^
+-hda %MINIX_PATH% ^
+-drive file=fat:rw:%MINIXOUT%,format=raw,media=disk,cache=none ^
+-netdev user,id=n1,ipv6=off,restrict=off,hostfwd=tcp:127.0.0.1:5522-:22 -device ne2k_pci,netdev=n1,mac=52:54:98:76:54:32 ^
+-debugcon file:.\log_e9.bin
+
+echo Has finalizado la ejecución de Minix
+
+:step4_end
+subst /d M:
 goto end
 
 :the_end_err_no_id
