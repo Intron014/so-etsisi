@@ -91,7 +91,7 @@ echo Booting MINIX
 -netdev user,id=n1,ipv6=off,restrict=off,hostfwd=tcp:127.0.0.1:5522-:22 -device ne2k_pci,netdev=n1,mac=52:54:98:76:54:32 ^
 -debugcon file:.\log_e9.bin
 
-echo Has finalizado la ejecución de Minix
+echo Shutting down MINIX
 
 :step4_end
 subst /d %ASSIGNEDLETER%:
@@ -102,4 +102,4 @@ goto end
 echo ERROR: No se ha encontrado la matricula en id.txt
 
 :end
-echo All set!
+echo Bye bye!
