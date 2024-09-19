@@ -53,6 +53,8 @@ echo 3.2 - Imagen OK
 goto step4
 :step3_imagenUnzippeada
 echo 3.3 - Imagen unzippeada con éxito
+echo 3.4 - Borrando zip anterior
+del imagen\%IMAGEZIP%
 goto step4
 
 :step4

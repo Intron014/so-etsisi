@@ -12,5 +12,6 @@ id.txt
 /src/MINIX3/
 /src/minix312ahack/
 /out/
+/src/**
 
 .DS_Store
