@@ -1,8 +1,6 @@
 @echo off
 
-if "%1"=="--minix" (
-    goto step4
-)
+set ASSIGNEDLETER=M
 
 :step1
 @rem 1. Leemos el número de matrícula
@@ -14,6 +12,15 @@ if %errorlevel%==0 (
     set /p ID=<id.txt
 )
 echo 1.1 - ID: %ID%
+
+@rem Variables necesarias:
+set IMAGENAME=minix3hd.plot.%ID%
+set IMAGEZIP=%IMAGENAME%.7z
+set IMAGEUNZIP=%IMAGENAME%.qcow2
+
+if "%1"=="--minix" (
+    goto step4
+)
 
 :step2
 @rem 2. Extraemos la carpeta de qemu
@@ -33,10 +40,7 @@ goto step3
 
 :step3
 @rem 3. Extraemos la imagen almacenada
-set IMAGENAME=minix3hd.plot.%ID%
 echo 3.1 - Imagen a extraer: %IMAGENAME%
-set IMAGEZIP=%IMAGENAME%.7z
-set IMAGEUNZIP=%IMAGENAME%.qcow2
 @rem .\imagen\minix3hd.xxx.%id%.qcow2 Esta será la imagen de trabajo.
 if exist .\imagen\%IMAGEUNZIP% goto step3_imagenExiste
     echo 3.2 - Imagen zippeada, unzippeando...
@@ -59,12 +63,13 @@ if %ERRORLEVEL% == 0 goto httptar_ok
     echo Abre otra terminal y open it...
     pause
 
-:htar_ok
-echo Estableciendo directorio temporal local
+
+:httptar_ok
+echo Init Temp
 set RUTATRABAJO=.\
-subst M: %RUTATRABAJO%
-echo M: %RUTATRABAJO%
-set MINIX_PATH=M:\imagen\%IMAGEUNZIP%
+subst %ASSIGNEDLETER%: %RUTATRABAJO%
+echo %ASSIGNEDLETER%: %RUTATRABAJO%
+set MINIX_PATH=%ASSIGNEDLETER%:\imagen\%IMAGEUNZIP%
 echo Trabajaremos con %MINIX_PATH%
 
 set MINIXOUT=.\out
@@ -73,9 +78,10 @@ if exist %MINIXOUT% goto out_dir_created
 
 :out_dir_created
 
-echo Minix arrancando
+echo All checks OK
+echo Booting MINIX
 
-M:utilidades\qemu\qemu-system-x86_64w.exe ^
+%ASSIGNEDLETER%:utilidades\qemu\qemu-system-x86_64w.exe ^
 -cpu "pentium3" ^
 -m 512 ^
 -name %ID% ^
@@ -88,7 +94,8 @@ M:utilidades\qemu\qemu-system-x86_64w.exe ^
 echo Has finalizado la ejecución de Minix
 
 :step4_end
-subst /d M:
+subst /d %ASSIGNEDLETER%:
+echo %ASSIGNEDLETER% has been released
 goto end
 
 :the_end_err_no_id
