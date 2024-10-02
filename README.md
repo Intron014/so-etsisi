@@ -17,7 +17,14 @@ Listado de cambios:
 
 ## Inicio rápido
 
-Para comenzar a trabajar con las herramientas hay que establecer un **identificador** para la imagen y **descomprimir**. Esto solo se hará la primera vez
+Para empezar a trabajar con las herramientas, antes de nada hay que añadir la carpeta a las exclusiones del antivirus de windows. Para ello ejecuta desde la terminal el script `utilidades\excluir.bat`. 
+Se puede ejecutar de 3 formas diferentes:
+
+1. `excluir.bat`: Excluye tu directorio actual de trabajo
+2. `excluir.bat -sd`: Excluye el directorio del script
+3. `excluir.bat absolute_path`: Excluye el directorio que le pases ¡Tiene que ser una ruta absoluta!
+
+Una vez excluido, hay que establecer un **identificador** para la imagen y **descomprimir**. Esto solo se hará la primera vez
 
 1. ```echo abcd > id.txt``` (Cuidado con los espacios extra en windows)
 2. ```utilidades\descomprimir.bat```
@@ -91,3 +98,26 @@ Hacer llegar el script syncwin a la máquina, coparlo a /bin/, darle permisos 75
 
 Lo mismo para la herramienta minixout
 
+## Curso 24-25
+
+Problemas de permisos al hacer syncwin. Solución:
+
+```
+Windows:
+
+git pull
+
+Minix: ($ o  # no se escriben; el primer chmod solo en necesario si el dir trabajo existe en root)
+
+$ su -
+# chmod -R u+w trabajo
+# syncwin
+
+… salida de syncwin …
+
+# bin/update_tools.sh
+Actualizando syncwin en /bin
+Actualizando permisos de syncwin
+```
+
+Tras estos comando ```syncwin``` verificará que los permisos son correctos.
