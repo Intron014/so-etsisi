@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include "generador.h"
+#include "probar-clave.h"
 #include <string.h>
 
 /**
@@ -32,25 +33,58 @@ static int escribir_palabras(void)
 	return OK;
 }
 
-static int print_words(const int f, const int l) {
+static void print_salt(const char salted_hash[]){
+	char notif[80];
+	int thewr;
+	char salt[3];
+
+	strncpy(salt, salted_hash, 2);
+	salt[2]='\0';
+
+	thewr = snprintf(notif, 80, "pid: %d - salt_hash: %s - salt: %s\n", 
+						getpid(), salted_hash, salt);
+
+	if(write(1, notif, thewr) == -1){
+		perror("Mensaje no impreso");
+	}
+}
+
+static int print_words(const int f, const int l, const char salted_hash[]) {
 	int index;
 	int lon;
-	char* const word = calloc(longitud()+2, sizeof(char));
-
+	int cfound;
+	char salt[3];
+	char* const word = calloc(longitud(), sizeof(char));
+	print_salt(salted_hash);
+	strncpy(salt, salted_hash, 2);
+	salt[2]='\0';
 	index = f;
-	while (index <= l){
+	cfound = 0;
+	while (index <= l && !cfound){
 		if(genera_palabra(index, word) != OK) {
 			return !OK;
 		}
-		lon = strlen(word);
-		word[lon] = '\n';
-		word[lon + 1] = '\0';
-		if (write(1, word, strlen(word)) == -1){
-			perror("Whoops, el mensaje se perdió");
+		if(!probar_clave(word, salted_hash, salt)){
+			char notif[80];
+			int thewr;
+			thewr = snprintf(notif, 80, "[%d] Clave encontrada: %s\n", getpid(), word);
+			cfound = 1;
+			if(write(1, notif, thewr) == -1){
+				perror("Mensaje no impreso");
+			}
 		}
 		index++;
 	}
 	free(word);
+	if(!cfound){
+		char notif[80];
+		int thewr;
+		thewr = snprintf(notif, 80, "[%d] No se ha encontrado la clave\n", getpid());
+		if(write(1, notif, thewr) == -1){
+			perror("Mensaje no impreso");
+		}
+		return !OK;
+	}
 	return OK;
 }
 
@@ -65,7 +99,7 @@ static void print_pid(const int f, const int l){
 	}
 }
 
-static void dealer(const int num_procesos) {
+static int dealer(const int num_procesos, const char salted_hash[]) {
 	int word;
 	int proc;
 	int tot_pal;
@@ -99,12 +133,25 @@ static void dealer(const int num_procesos) {
 	}
 
 	if (pid != 0){
-		while (wait(&son) != -1);
-	} else {
-		print_words(start_word, end_word);
-	}
+		int found;
+		found = 0;
+		while (wait(&son) != -1){
+			if(WIFEXITED(son) && (WEXITSTATUS(son) == 0)) {
+				found = 1;
+			}
+		}
+		if(found) {
+			printf("Controlador: clave encontrada\n");
+		} else {
+			printf("Controlador: clave no encontrada\n");
+		}
 
+	} else {
+		exit(print_words(start_word, end_word, salted_hash));
+	}
+	return OK;
 }
+
 
 static void escribir_numword(const int num_procesos) {
 	int word;
@@ -139,7 +186,8 @@ static void escribir_numword(const int num_procesos) {
  * información necesaria de los argumentos del programa.
  * Si todo va bien, devuelve OK. En caso contrario devuelve !OK.
  */
-static int trabajar(const char alfabeto[], const int longitud, const int num_procesos)
+static int trabajar(const char alfabeto[], const int longitud, const int num_procesos, 
+						const char salted_hash[])
 {
 	int ppg;
 	if (configura_generador(alfabeto, longitud) != OK)
@@ -147,8 +195,7 @@ static int trabajar(const char alfabeto[], const int longitud, const int num_pro
 		return !OK;
 	}
 	
-	dealer(num_procesos);
-	return OK;
+	return dealer(num_procesos, salted_hash);
 }
 
 /**
@@ -157,7 +204,7 @@ static int trabajar(const char alfabeto[], const int longitud, const int num_pro
  */
 static void uso(const char prog[])
 {
-	fprintf(stderr, "Uso: %s <alfabeto> <longitud> <num procesos>\n", prog);
+	fprintf(stderr, "Uso: %s <alfabeto> <longitud> <num procesos> <salted hash>\n", prog);
 }
 
 /**
@@ -187,7 +234,7 @@ int main(const int argc, const char * argv[])
 	long longitud;
 	long numero_procesos;
 
-	if (argc != 4)
+	if (argc != 5)
 	{
 		uso(argv[0]);
 		return !OK;
@@ -203,10 +250,8 @@ int main(const int argc, const char * argv[])
 		fprintf(stderr, "la longitud no es válida\n");
 		return !OK;
 	}
-
 	
-
-	if (trabajar(argv[1], longitud, numero_procesos) != OK)
+	if (trabajar(argv[1], longitud, numero_procesos, argv[4]) != OK)
 	{
 		fprintf(stderr, "el programa ha fallado\n");
 		return !OK;

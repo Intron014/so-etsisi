@@ -6,7 +6,30 @@
 
 int probar_clave(const char clave[], const char salt_hash[], const char salt[])
 {
-    // TODO: rellenar según la especificación contenida en probar-clave.h
+    char* hash;
+    char* hash_generado;
+    int resultado;
+    /* Nulls */
+    if (clave == NULL || salt_hash == NULL || salt == NULL)
+    {
+        return 1;
+    }
+
+    hash = crypt(clave, salt);
+
+    if(hash == NULL)
+    {
+        return 3;
+    }
+
+    /* Salt incorrecto */
+    if (strncmp(salt_hash, salt, 2))
+    {
+        return 2;
+    }
+
+    resultado = (strcmp(salt_hash, hash));
+    return resultado;
 }
 
 void test_probar_clave(void)
@@ -22,7 +45,7 @@ void test_probar_clave(void)
         { "pw2003", "mBgpqZDwMlac6", "mB", 1 },
         
         /* Caso 2: Clave incorrecta */
-        { "pw2004", "mBVT5KtbUzAeM", "mB", 0 },
+        { "bt0354", "mBVT5KtbUzAeM", "mB", 0 },
         
         /* Caso 3: Clave vacía */
         { "", "mBgpqZDwMlac6", "$6$saltsalt", 0 },

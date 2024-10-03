@@ -2,7 +2,7 @@
 # Variables
 CC = cc
 TARGET = reventador
-OBJS = generador.o reventador.o
+OBJS = generador.o reventador.o probar-clave.o
 
 # Regla por defecto
 all: $(TARGET)
@@ -20,6 +20,9 @@ generador.o: generador.c generador.h synced
 reventador.o: reventador.c generador.h synced
 	$(CC) -c reventador.c
 
+# Regla para probar-clave.o
+probar-clave.o: probar-clave.c generador.h synced
+	$(CC) -c probar-clave.c
 synced:
 	syncwin
 	touch synced
