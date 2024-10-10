@@ -57,14 +57,6 @@ if not exist .\imagen\%IMAGEUNZIP% goto step3_imagenNoExiste
 :step4
 @rem 4. Commiteamos los cambios
 git status
-set /p ANS="Do you want to commit the following changes? (y/n): "
-if %ANS%==n goto end
-echo 4.1 - Commiteando cambios...
-git add .\imagen\%IMAGEZIP%
-git commit -m "Nueva imagen zippeada"
-git add .\trabajo\
-git commit -m "Carpeta de trabajo actualizada"
-echo 4.2 - Cambios commiteados con éxito
 goto end
 
 :err_imagenNoExiste
