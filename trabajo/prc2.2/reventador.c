@@ -9,6 +9,39 @@
 #include "generador.h"
 #include "probar-clave.h"
 #include <string.h>
+#include <signal.h>
+
+#define MAX_WORKERS 100
+pid_t stack_trabajadores[MAX_WORKERS];
+int num_active_workers = 0;
+int cfound = 0;
+
+void manejador(int signum) {
+    exit(2);
+}
+
+static void add_trabajador(pid_t pid) {
+    if (num_active_workers < MAX_WORKERS) {
+        stack_trabajadores[num_active_workers++] = pid;
+    }
+}
+
+static void remove_trabajador(pid_t pid) {
+	int i;
+    for (i = 0; i < num_active_workers; i++) {
+        if (stack_trabajadores[i] == pid) {
+            stack_trabajadores[i] = stack_trabajadores[--num_active_workers];
+            break;
+        }
+    }
+}
+
+static void kill_them_all(void) {
+	int i;
+    for (i = 0; i < num_active_workers; i++) {
+        kill(stack_trabajadores[i], SIGTERM);
+    }
+}
 
 /**
  * Muestra todas las palabras que puede genera el generador.
@@ -116,6 +149,8 @@ static int dealer(const int num_procesos, const char salted_hash[]) {
 	base_ppg = tot_pal / num_procesos;
 	resto = tot_pal % num_procesos;
 
+	signal(SIGTERM, manejador);
+
 	for (proc = 0; proc < num_procesos && word < tot_pal && pid != 0 ; proc++) {
 		start_word = word;
 		words_for_proc = base_ppg + (proc < resto ? 1 : 0);
@@ -130,26 +165,40 @@ static int dealer(const int num_procesos, const char salted_hash[]) {
 				word +=words_for_proc;
 			}
 		}
+
+		if (pid == 0) {
+            exit(print_words(start_word, end_word, salted_hash));
+        } else if (pid > 0) {
+            add_trabajador(pid);
+        }
 	}
 
-	if (pid != 0){
-		int found;
-		found = 0;
-		while (wait(&son) != -1){
-			if(WIFEXITED(son) && (WEXITSTATUS(son) == 0)) {
-				found = 1;
-			}
-		}
-		if(found) {
-			printf("Controlador: clave encontrada\n");
-		} else {
-			printf("Controlador: clave no encontrada\n");
-		}
+	if (pid != 0) {
+        int status;
+        pid_t finished_pid;
+        while ((finished_pid = waitpid(-1, &status, 0)) != -1) {
+            remove_trabajador(finished_pid);
+            
+            if (WIFEXITED(status)) {
+                int exit_status = WEXITSTATUS(status);
+                if (exit_status == 0) {
+                    cfound = 1;
+                    kill_them_all();
+                } else if (exit_status == 2) {
+                    printf("[%d] Abortado (SIGTERM)\n", finished_pid);
+                }
+            } else if (WIFSIGNALED(status)) {
+                printf("[%d] Abortado (%d)\n", finished_pid, WTERMSIG(status));
+            }
+        }
 
-	} else {
-		exit(print_words(start_word, end_word, salted_hash));
-	}
-	return OK;
+        if (cfound) {
+            printf("Controlador: clave encontrada\n");
+        } else {
+            printf("Controlador: clave no encontrada\n");
+        }
+    }
+    return OK;
 }
 
 
