@@ -3,5 +3,9 @@
         90
     ],
     "files.autoSave": "onFocusChange",
-    "files.eol": "\n"
+    "files.eol": "\n",
+    "files.associations": {
+        ".fantomasignore": "ignore",
+        "types.h": "c"
+    }
 }
