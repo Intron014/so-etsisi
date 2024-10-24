@@ -44,6 +44,7 @@ echo 3.1 - Imagen a extraer: %IMAGENAME%
 @rem .\imagen\minix3hd.xxx.%id%.qcow2 Esta será la imagen de trabajo.
 if exist .\imagen\%IMAGEUNZIP% goto step3_imagenExiste
     echo 3.2 - Imagen zippeada, unzippeando...
+    .\utilidades\7za.exe -o".\src\stuff" e .\src\minix312ahack.7z
     .\utilidades\7za.exe -o".\imagen\"  e .\imagen\%IMAGEZIP%
     goto step3_imagenUnzippeada
 
