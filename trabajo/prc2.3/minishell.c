@@ -113,33 +113,35 @@ int exec_pwd(struct orden* o){
 	return SUCCESS;
 }
 
-int exec_external_command (struct orden* actual){
-	int son;
-	pid_t pid = 1;
-
-	pid = fork();
-	if(pid == -1) {
-		perror("Proceso hijo no creado");
-	}
-
-	if(pid == 0) {
-		exit(execlp(actual->args[0], actual->args[1]));
-	}
-
-	if(pid != 0) {
-		int status;
-		pid_t finished_pid;
-		while ((finished_pid = waitpid(-1, &status, 0)) != -1) {            
-            if (WIFEXITED(status)) {
-                int exit_status = WEXITSTATUS(status);
-                if (exit_status == 0) {
-                    return SUCCESS;
-                } 
-            } 
+int exec_external_command(struct orden* actual) {
+	
+    int status;
+    pid_t pid = fork();
+    
+    if (pid == -1) {
+        perror("Error al crear proceso hijo");
+        return ERROR;
+    }
+    
+    if (pid == 0) {
+        if (execvp(actual->args[0], actual->args) == -1) {
+            perror("Error al ejecutar el comando");
+            exit(EXIT_FAILURE);
         }
-	}
-	return ERROR;
-		
+    }
+    
+    if (waitpid(pid, &status, 0) == -1) {
+        perror("Error esperando al proceso hijo");
+        return ERROR;
+    }
+    
+    if (WIFEXITED(status)) {
+        if (WEXITSTATUS(status) == 0) {
+            return SUCCESS;
+        }
+    }
+    
+    return ERROR;
 }
 
 int command_switcher(struct orden* actual){
