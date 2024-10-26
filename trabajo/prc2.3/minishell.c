@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <errno.h>
@@ -124,6 +125,40 @@ int exec_external_command(struct orden* actual) {
     }
     
     if (pid == 0) {
+        if (actual->entrada != NULL) {
+            int dedonde = open(actual->entrada, O_RDONLY);
+            if (dedonde == -1) {
+                perror("Error al abrir archivo de entrada");
+                exit(EXIT_FAILURE);
+            }
+            if (close(STDIN_FILENO) == -1) {
+                perror("Error al cerrar stdin");
+                exit(EXIT_FAILURE);
+            }
+            if (dup2(dedonde, STDIN_FILENO) == -1) {
+                perror("Error al redirigir entrada");
+                exit(EXIT_FAILURE);
+            }
+            close(dedonde);
+        }
+
+        if (actual->salida != NULL) {
+            int adonde = open(actual->salida, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if (adonde == -1) {
+                perror("Error al abrir archivo de salida");
+                exit(EXIT_FAILURE);
+            }
+            if (close(STDOUT_FILENO) == -1) {
+                perror("Error al cerrar stdout");
+                exit(EXIT_FAILURE);
+            }
+            if (dup2(adonde, STDOUT_FILENO) == -1) {
+                perror("Error al redirigir salida");
+                exit(EXIT_FAILURE);
+            }
+            close(adonde);
+        }
+
         if (execvp(actual->args[0], actual->args) == -1) {
             perror("Error al ejecutar el comando");
             exit(EXIT_FAILURE);
